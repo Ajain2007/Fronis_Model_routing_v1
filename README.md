@@ -134,5 +134,4 @@ Activate `.venv` and install dependencies with `python -m pip install -e .`. Avo
 **AWS CLI is not recognized**  
 Restart VS Code or PowerShell after installing AWS CLI. It is available at `C:\Program Files\Amazon\AWSCLIV2\aws.exe` until the refreshed `PATH` is picked up.
 
-**GitHub push returns 403**  
-Accept the repository collaborator invitation using the GitHub identity that will push the code, then retry `git push -u origin main`.
+
