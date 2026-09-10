@@ -1,0 +1,9 @@
+{
+  "labels": [
+    "Coding",
+    "Knowledge",
+    "Math",
+    "Reasoning / Logic"
+  ],
+  "normalize_embeddings": false
+}
