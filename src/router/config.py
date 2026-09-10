@@ -6,15 +6,20 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data" / "processed"
 MODEL_DIR = PROJECT_ROOT / "models"
 
-TRAIN_DATA_PATH = DATA_DIR / "fronis_router_train_embedded.parquet"
+# The original OpenAI vectors remain in this source file as a text/data backup.
+TRAIN_SOURCE_DATA_PATH = DATA_DIR / "fronis_router_train_embedded.parquet"
+# All serving artifacts use this Titan-only vector file.
+TRAIN_DATA_PATH = DATA_DIR / "fronis_router_train_titan_embedded.parquet"
 DIFFICULTY_DATA_PATH = DATA_DIR / "fronis_difficulty_dataset.parquet"
-KNN_PATH = MODEL_DIR / "knn" / "knn_classifier.joblib"
-KNN_EXAMPLES_PATH = MODEL_DIR / "knn" / "training_queries.parquet"
+# Keep Titan artifacts distinct from the existing OpenAI-vector artifacts.
+KNN_PATH = MODEL_DIR / "knn" / "titan_knn_classifier.joblib"
+KNN_EXAMPLES_PATH = MODEL_DIR / "knn" / "titan_training_queries.parquet"
 SETFIT_PATH = MODEL_DIR / "setfit"
-DIFFICULTY_INDEX_PATH = MODEL_DIR / "routing" / "difficulty_index.parquet"
-ROUTING_PROFILE_PATH = MODEL_DIR / "routing" / "routing_profile.parquet"
+DIFFICULTY_INDEX_PATH = MODEL_DIR / "routing" / "titan_difficulty_index.parquet"
+ROUTING_PROFILE_PATH = MODEL_DIR / "routing" / "titan_routing_profile.parquet"
 
-EMBEDDING_MODEL = "text-embedding-3-small"
+TITAN_MODEL_ID = "amazon.titan-embed-text-v2:0"
+TITAN_DIMENSIONS = 1024
 RERANKER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 TOP_N_DOMAINS = 2
 KNN_NEIGHBORS = 11

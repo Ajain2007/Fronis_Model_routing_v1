@@ -7,4 +7,8 @@ __pycache__/
 titan-request.json
 titan-test-output.json
 models/knn/*.joblib
+!models/knn/titan_knn_classifier.joblib
+models/knn/titan_training_queries.parquet
 models/routing/*.parquet
+!models/routing/titan_difficulty_index.parquet
+!models/routing/titan_routing_profile.parquet

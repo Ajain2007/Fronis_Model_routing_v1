@@ -29,7 +29,7 @@ Example result:
 ```text
 data/processed/                    Prepared benchmark data and query embeddings
 models/setfit/                     Preserved, exported SetFit model weights
-models/knn/                        Generated KNN serving artifacts
+models/knn/                        Generated KNN serving artifacts (provider-specific)
 models/routing/                    Generated similarity index and pass-rate profile
 scripts/build_router_artifacts.py  Builds KNN and retrieval artifacts
 scripts/route_query.py             Routes one query from the command line
@@ -54,9 +54,9 @@ Always activate the virtual environment before running the project:
 .\.venv\Scripts\Activate.ps1
 ```
 
-## Build the local artifacts
+## Build or rebuild local artifacts
 
-The first build creates the KNN model and retrieval files:
+The repository includes the Titan KNN classifier and Titan retrieval artifacts, so a fresh clone can route queries immediately after dependency installation and AWS SSO login. Run this command only when you need to rebuild them after changing the historical Titan vectors or routing policy:
 
 ```powershell
 python scripts\build_router_artifacts.py
@@ -65,22 +65,24 @@ python scripts\build_router_artifacts.py
 It creates:
 
 ```text
-models/knn/knn_classifier.joblib
-models/knn/training_queries.parquet
-models/routing/difficulty_index.parquet
-models/routing/routing_profile.parquet
+models/knn/titan_knn_classifier.joblib
+models/knn/titan_training_queries.parquet
+models/routing/titan_difficulty_index.parquet
+models/routing/titan_routing_profile.parquet
 ```
 
 This command **does not retrain or modify SetFit**. The saved SetFit weights and classification head are preserved in `models/setfit/`.
 
-Run this build only after a fresh clone, or when the historical embeddings or benchmark data change. Do not run it for every incoming query.
+Do not run this build for every incoming query.
 
 ## Route a query
 
-The current checked-in implementation uses the OpenAI embedding client. Set a valid key only in the current terminal session, then route a query:
+The router uses Amazon Bedrock Titan V2 embeddings. Log in to AWS SSO and set the profile in the current terminal, then route a query:
 
 ```powershell
-$env:OPENAI_API_KEY = "your_openai_key"
+aws sso login --profile ai-runtime-governor-729297430338
+$env:AWS_PROFILE = "ai-runtime-governor-729297430338"
+$env:AWS_REGION = "us-east-1"
 python scripts\route_query.py "Write Python code to calculate the probability of drawing two aces"
 ```
 
@@ -99,17 +101,25 @@ The prepared dataset assigns difficulty from historical pass/fail outcomes:
 
 For the selected difficulty, the router chooses the least expensive model that meets the configured minimum historical success rate. Configuration is in `src/router/config.py`; selection logic is in `src/router/difficulty.py`.
 
-## Amazon Bedrock Titan migration
+## Create Titan artifacts
 
-AWS SSO access to Titan V2 has been verified for the configured profile. The current source code still uses OpenAI embeddings. Before changing the provider, all historical vectors and the KNN/retrieval artifacts must be regenerated in the same Titan vector space; mixing Titan query embeddings with the existing OpenAI vectors is invalid.
-
-After the Titan implementation is added, authenticate and set the AWS profile in each new terminal:
+The existing `fronis_router_train_embedded.parquet` file is preserved as an OpenAI-vector backup. Do not use it together with Titan query vectors. First install the updated dependency and authenticate:
 
 ```powershell
 aws sso login --profile ai-runtime-governor-729297430338
 $env:AWS_PROFILE = "ai-runtime-governor-729297430338"
 $env:AWS_REGION = "us-east-1"
 ```
+
+Then create normalized Titan vectors for all unique train queries and rebuild KNN/retrieval artifacts:
+
+```powershell
+python -m pip install -e .
+python scripts\embed_titan_train_queries.py
+python scripts\build_router_artifacts.py
+```
+
+The Titan embedding script is resumable. If it is interrupted, run it again and it continues from the query IDs already written to `fronis_router_train_titan_embedded.parquet`.
 
 The role must permit `bedrock:InvokeModel` for `amazon.titan-embed-text-v2:0`.
 
